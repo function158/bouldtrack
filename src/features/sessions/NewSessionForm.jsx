@@ -76,10 +76,14 @@ export default function NewSessionForm({ user, onSaved, onCancel }) {
     attempts: "",
     note: "",
     wallHeight: "5",
+    failed: false, // 👈 NY
+    flash: false,  // 👈 NY
   });
 
-  
   /* ---------------- helpers ---------------- */
+
+  const inputClass =
+    "w-full h-12 bg-slate-700/70 rounded-xl px-4 text-white placeholder:text-slate-400 border border-slate-600 focus:border-blue-500 focus:outline-none";
 
   const sortLocations = (list) =>
     [...list].sort((a, b) =>
@@ -140,7 +144,7 @@ export default function NewSessionForm({ user, onSaved, onCancel }) {
   };
 
   const addRoute = () => {
-    if (!newRoute.color) return;
+    if (!newRoute.color || !newRoute.attempts) return;
     setCurrentSession(s => ({
       ...s,
       routes: [...s.routes, { ...newRoute }],
@@ -192,167 +196,254 @@ export default function NewSessionForm({ user, onSaved, onCancel }) {
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Ny Session</h2>
+    <div className="min-h-screen bg-slate-900 px-4 py-6">
+      <div className="max-w-xl mx-auto bg-slate-800/70 backdrop-blur rounded-2xl p-6 space-y-6">
 
-      <input
-        type="date"
-        value={currentSession.date}
-        onChange={(e) =>
-          setCurrentSession(s => ({ ...s, date: e.target.value }))
-        }
-        className="w-full bg-slate-700 p-3 rounded-lg"
-      />
+        <h2 className="text-xl font-semibold text-white">Ny Session</h2>
 
-      {!showManualLocationInput ? (
-        <select
-          value={currentSession.location}
-          onChange={(e) => addLocationToList(e.target.value)}
-          className="w-full bg-slate-700 p-3 rounded-lg"
-        >
-          <option value="">Vælg lokation</option>
-          {locationsList.map(l => (
-            <option key={l} value={l}>{l}</option>
-          ))}
-          <option value="__manual__">+ Tilføj ny</option>
-        </select>
-      ) : (
-        <input
-          type="text"
-          placeholder="Ny lokation"
-          className="w-full bg-slate-700 p-3 rounded-lg"
-          onBlur={(e) => addLocationToList(e.target.value)}
-        />
-      )}
-
-      <input
-        type="text"
-        placeholder="Varighed (fx 1t 30m)"
-        value={currentSession.duration}
-        onChange={(e) =>
-          setCurrentSession(s => ({ ...s, duration: e.target.value }))
-        }
-        className="w-full bg-slate-700 p-3 rounded-lg"
-      />
-
-      {/* Øvelser */}
-      <div>
-        <label className="text-sm text-slate-400">Øvelser</label>
-
-        <div className="flex gap-2 mb-2">
-          <select
-            value={selectedExercise}
-            onChange={(e) => setSelectedExercise(e.target.value)}
-            className="flex-1 bg-slate-700 p-3 rounded-lg"
-          >
-            <option value="">Vælg øvelse</option>
-            {COMMON_EXERCISES.map(ex => (
-              <option key={ex}>{ex}</option>
-            ))}
-          </select>
-
+        {/* Dato */}
+        <div>
+          <label className="text-sm text-slate-400">Dato</label>
           <input
-            type="number"
-            placeholder="Reps"
-            value={exerciseReps}
-            onChange={(e) => setExerciseReps(e.target.value)}
-            className="w-24 bg-slate-700 p-3 rounded-lg"
+            type="date"
+            value={currentSession.date}
+            onChange={(e) =>
+              setCurrentSession(s => ({ ...s, date: e.target.value }))
+            }
+            className={inputClass}
           />
         </div>
 
-        <button
-          onClick={addExerciseWithReps}
-          className="w-full bg-slate-600 py-2 rounded-lg"
-        >
-          Tilføj øvelse
-        </button>
-      </div>
-      {/* Ruter */}
-      <div>
-        <label className="text-sm text-slate-400">Ruter</label>
+        {/* Lokation */}
+        <div>
+          <label className="text-sm text-slate-400">Lokation</label>
 
-        <div className="grid grid-cols-3 gap-2">
-          {COLORS.map(c => (
-            <button
-              key={c}
-              onClick={() => setNewRoute(r => ({ ...r, color: c }))}
-              className="p-3 rounded-lg text-sm"
-              style={{ background: getGradient(c) }}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-  <input
-    type="text"
-    value={newRoute.number}
-    onChange={(e) =>
-      setNewRoute({ ...newRoute, number: e.target.value })
-    }
-    placeholder="Nr"
-    className="flex-1 bg-slate-700 rounded-lg p-3 text-white border border-slate-600"
-  />
-
-  {/* ⭐ VIGTIGT: ANTAL FORSØG */}
-  <input
-    type="number"
-    min="1"
-    value={newRoute.attempts}
-    onChange={(e) =>
-      setNewRoute({ ...newRoute, attempts: e.target.value })
-    }
-    placeholder="Forsøg"
-    className="w-24 bg-slate-700 rounded-lg p-3 text-white border border-slate-600"
-  />
-</div>
-
-        <button
-          onClick={addRoute}
-          className="w-full bg-blue-600 py-3 rounded-xl mt-2"
-        >
-          Tilføj rute
-        </button>
-
-        {groupAndSortRoutes(currentSession.routes).map(group => (
-          <div key={group.wallHeight}>
-            <h4 className="text-sm text-slate-400">
-              {group.wallHeight} m væg
-            </h4>
-            {group.routes.map((r, i) => (
-              <div
-                key={i}
-                className="p-2 rounded-lg text-sm"
-                style={{ background: getGradient(r.color) }}
+          {!showManualLocationInput ? (
+            <div className="flex gap-2">
+              <select
+                value={currentSession.location}
+                onChange={(e) => addLocationToList(e.target.value)}
+                className={`${inputClass} flex-1`}
               >
-                {r.color} {r.number} ({r.attempts})
-              </div>
+                <option value="">Vælg eksisterende lokation</option>
+                {locationsList.map(l => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+                <option value="__manual__">+ Tilføj ny</option>
+              </select>
+
+              <button
+                onClick={() => setShowManualLocationInput(true)}
+                className="h-12 w-12 rounded-xl bg-blue-500 text-white text-xl"
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              placeholder="Ny lokation"
+              className={inputClass}
+              onBlur={(e) => addLocationToList(e.target.value)}
+            />
+          )}
+        </div>
+
+        {/* Varighed */}
+        <div>
+          <label className="text-sm text-slate-400">Varighed</label>
+          <input
+            type="text"
+            placeholder="f.eks. 1 time 50 min eller 30 min"
+            value={currentSession.duration}
+            onChange={(e) =>
+              setCurrentSession(s => ({ ...s, duration: e.target.value }))
+            }
+            className={inputClass}
+          />
+        </div>
+
+        {/* Øvelser */}
+        <div className="space-y-3">
+          <label className="text-sm text-slate-400">Øvelser</label>
+
+          <input
+            type="number"
+            placeholder="Antal reps"
+            value={exerciseReps}
+            onChange={(e) => setExerciseReps(e.target.value)}
+            className={inputClass}
+          />
+
+          <div className="grid grid-cols-2 gap-2">
+            {COMMON_EXERCISES.map(ex => (
+              <button
+                key={ex}
+                onClick={() => setSelectedExercise(ex)}
+                className={`h-12 rounded-xl text-sm font-medium ${
+                  selectedExercise === ex
+                    ? "bg-blue-500 text-white"
+                    : "bg-slate-700 text-slate-300"
+                }`}
+              >
+                {ex}
+              </button>
             ))}
           </div>
-        ))}
+
+          <button
+            onClick={addExerciseWithReps}
+            className="w-full h-12 rounded-xl bg-slate-600 text-white"
+          >
+            Tilføj øvelse
+          </button>
+
+          <input
+            type="text"
+            placeholder="Eller skriv manuelt (f.eks. 10 pull ups)"
+            value={newExercise}
+            onChange={(e) => setNewExercise(e.target.value)}
+            className={inputClass}
+            onBlur={addExercise}
+          />
+        </div>
+
+        {/* Ruter */}
+        <div className="space-y-3">
+          <label className="text-sm text-slate-400">Ruter</label>
+
+          <div className="grid grid-cols-3 gap-2">
+            {COLORS.map(c => (
+              <button
+                key={c}
+                onClick={() => setNewRoute(r => ({ ...r, color: c }))}
+                className="h-12 rounded-xl text-sm font-semibold text-white"
+                style={{ background: getGradient(c) }}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Nummer (valgfrit)"
+              value={newRoute.number}
+              onChange={(e) =>
+                setNewRoute({ ...newRoute, number: e.target.value })
+              }
+              className={`${inputClass} flex-1`}
+            />
+
+            <input
+              type="number"
+              placeholder="Forsøg"
+              value={newRoute.attempts}
+              onChange={(e) =>
+                setNewRoute({ ...newRoute, attempts: e.target.value })
+              }
+              className="w-24 h-12 bg-slate-700/70 rounded-xl px-3 text-white border border-slate-600"
+            />
+          </div>
+          <button
+  type="button"
+  onClick={() =>
+    setNewRoute(r => ({
+      ...r,
+      failed: !r.failed,
+      note: r.failed ? "" : "Fejl", // valgfrit fallback
+    }))
+  }
+  className={`h-12 px-4 rounded-xl font-medium ${
+    newRoute.failed
+      ? "bg-red-600 text-white"
+      : "bg-slate-700 text-slate-300"
+  }`}
+>
+  ❌ Fejl
+</button>
+<button
+  type="button"
+  onClick={() =>
+    setNewRoute(r => ({
+      ...r,
+      flash: !r.flash,
+      attempts: !r.flash ? "1" : "",
+      failed: false, // flash kan ikke være fejl
+    }))
+  }
+  className={`h-12 px-4 rounded-xl font-medium ${
+    newRoute.flash
+      ? "bg-yellow-500 text-black"
+      : "bg-slate-700 text-slate-300"
+  }`}
+>
+  ⚡ Flash
+</button>
+
+
+          <input
+            type="text"
+            placeholder="Note (f.eks. 'Fejl – ikke nok fingerstyrke')"
+            value={newRoute.note}
+            onChange={(e) =>
+              setNewRoute({ ...newRoute, note: e.target.value })
+            }
+            className={inputClass}
+          />
+
+          <button
+            onClick={addRoute}
+            className="w-full h-12 rounded-xl bg-blue-600 text-white font-semibold"
+          >
+            Tilføj rute
+          </button>
+
+          {groupAndSortRoutes(currentSession.routes).map(group => (
+            <div key={group.wallHeight}>
+              <h4 className="text-sm text-slate-400 mt-3">
+                {group.wallHeight} m væg
+              </h4>
+              {group.routes.map((r, i) => (
+                <div
+                  key={i}
+                  className="mt-1 p-2 rounded-lg text-sm text-white"
+                  style={{ background: getGradient(r.color) }}
+                >
+                  {r.color} {r.number} ({r.attempts})
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Knapper */}
+        <div className="space-y-3 pt-4">
+          <button
+            onClick={() => saveSession(false)}
+            disabled={saving}
+            className="w-full h-14 rounded-xl bg-green-500 text-white font-semibold text-lg"
+          >
+            Gem Session
+          </button>
+
+          <button
+            onClick={() => saveSession(true)}
+            className="w-full h-12 rounded-xl bg-slate-600 text-white"
+          >
+            Gem som kladde
+          </button>
+
+          <button
+            onClick={onCancel}
+            className="w-full text-slate-400 text-sm"
+          >
+            Annuller
+          </button>
+        </div>
+
       </div>
-
-      <button
-        onClick={() => saveSession(false)}
-        disabled={saving}
-        className="w-full bg-green-600 py-4 rounded-xl"
-      >
-        Gem session
-      </button>
-
-      <button
-        onClick={() => saveSession(true)}
-        className="w-full bg-slate-600 py-3 rounded-xl"
-      >
-        Gem som kladde
-      </button>
-
-      <button
-        onClick={onCancel}
-        className="w-full text-slate-400"
-      >
-        Annuller
-      </button>
     </div>
   );
 }
